@@ -1,0 +1,23 @@
+{
+  "name": "com.kvd.vegetation",
+  "version": "0.0.1",
+  "displayName": "KamilVDono - Vegetation",
+  "description": "This package contains vegetation",
+  "unity": "2022.1",
+  "unityRelease": "0b2",
+  "keywords": [
+    "vegetation",
+    "scripts",
+    "tools"
+  ],
+  "author": {
+    "name": "KamilVDono",
+    "email": "kamilvdono@gmail.com"
+  },
+  "dependencies": {
+    "com.unity.mathematics": "1.2.6",
+    "com.unity.burst": "1.8.3",
+    "com.unity.collections": "2.1.0-pre.18",
+    "com.kvd.utils": "0.0.1"
+  }
+}

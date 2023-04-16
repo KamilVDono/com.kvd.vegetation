@@ -18,7 +18,7 @@ void InstanceColor_float(out float4 Out)
 #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
     Out = _InstanceColors[unity_InstanceID].color;
 #else
-    Out = float4(0, 0, 0, 1);
+    Out = float4(1, 1, 1, 1);
 #endif
 }
 

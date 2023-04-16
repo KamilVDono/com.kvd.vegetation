@@ -13,11 +13,11 @@ namespace KVD.Vegetation
 		[field: SerializeField] public ShadowCastingMode ShadowCastingMode { get; private set; }
 		
 		[field: SerializeField] public Mesh Mesh{ get; private set; }
-		[field: SerializeField] public Material Material{ get; private set; }
+		[field: SerializeField] public Material[] Materials{ get; private set; }
 		[field: SerializeField] public Matrix4x4 ObjectTransform{ get; private set; }
-		[field: SerializeField] public uint IndicesCount{ get; private set; }
-		[field: SerializeField] public uint IndicesStart{ get; private set; }
-		[field: SerializeField] public uint BaseVertex{ get; private set; }
+		[field: SerializeField] public uint[] IndicesCounts{ get; private set; }
+		[field: SerializeField] public uint[] IndicesStarts{ get; private set; }
+		[field: SerializeField] public uint[] BaseVertices{ get; private set; }
 #nullable restore
 
 		public RuntimeVegetationItem ToRuntimeVegetationItem(uint count)

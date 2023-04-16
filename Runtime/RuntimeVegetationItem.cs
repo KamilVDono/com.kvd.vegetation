@@ -8,8 +8,10 @@ namespace KVD.Vegetation
 {
 	public class RuntimeVegetationItem : IDisposable
 	{
+		const int ArgsStride = 5 * sizeof(uint);
+		
 		private readonly Mesh _mesh;
-		private readonly Material _material;
+		private readonly Material[] _materials;
 		private readonly Matrix4x4 _objectTransform;
 		private readonly int _layer;
 		private readonly ShadowCastingMode _shadowCastingMode;
@@ -23,18 +25,22 @@ namespace KVD.Vegetation
 		public RuntimeVegetationItem(VegetationItem item, uint count)
 		{
 			_mesh              = item.Mesh;
-			_material          = item.Material;
+			_materials         = item.Materials;
 			_objectTransform   = item.ObjectTransform;
 			_layer             = item.Layer;
 			_shadowCastingMode = item.ShadowCastingMode;
 			
-			var args = new uint[] { 0, 0, 0, 0, 0, };
 			// Arguments for drawing mesh.
-			args[0]     = item.IndicesCount;
-			args[1]     = count;
-			args[2]     = item.IndicesStart;
-			args[3]     = item.BaseVertex;
-			_argsBuffer = new(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+			var args = new uint[_materials.Length*5];
+			for (var i = 0; i < _materials.Length; i++)
+			{
+				args[i*5 + 0] = item.IndicesCounts[i];
+				args[i*5 + 1] = count;
+				args[i*5 + 2] = item.IndicesStarts[i];
+				args[i*5 + 3] = item.BaseVertices[i];
+				args[i*5 + 4] = 0;
+			}
+			_argsBuffer = new(_materials.Length, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
 			_argsBuffer.SetData(args);
 		}
 		
@@ -92,12 +98,16 @@ namespace KVD.Vegetation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Render(Camera camera)
 		{
-			for (var i = 0; i < _buffers.Count; i++)
+			for (var i = 0; i < _materials.Length; i++)
 			{
-				_material.SetBuffer(_buffers[i].Property, _buffers[i].Buffer);
+				for (var j = 0; j < _buffers.Count; j++)
+				{
+					_materials[i].SetBuffer(_buffers[j].Property, _buffers[j].Buffer);
+				}
+				Graphics.DrawMeshInstancedIndirect(_mesh, i, _materials[i], _bounds,
+					_argsBuffer, argsOffset: i*ArgsStride,
+					camera: camera, layer: _layer, castShadows: _shadowCastingMode);
 			}
-			Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, _bounds, _argsBuffer,
-				camera: camera, layer: _layer, castShadows: _shadowCastingMode);
 		}
 		
 		public void DrawGizmosBounds()
@@ -114,12 +124,6 @@ namespace KVD.Vegetation
 			}
 			_buffers.Clear();
 			VegetationManager.Instance.Remove(this);
-		}
-
-		public override string ToString()
-		{
-			return
-				$"Name: {Name}, Bounds: {_bounds}, Mesh: {_mesh}, Material: {_material}, ObjectTransform: {_objectTransform}, Layer: {_layer}";
 		}
 
 		private void CalculateBounds(InstanceTransform[] transforms)

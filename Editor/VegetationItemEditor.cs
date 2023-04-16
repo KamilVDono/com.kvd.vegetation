@@ -9,23 +9,23 @@ namespace KVD.Vegetation.Editor.Editor
 	{
 #nullable disable
 		SerializedProperty _mesh;
-		SerializedProperty _material;
+		SerializedProperty _materials;
 		SerializedProperty _transform;
-		SerializedProperty _indicesCount;
-		SerializedProperty _indicesStart;
-		SerializedProperty _baseVertex;
+		SerializedProperty _indicesCounts;
+		SerializedProperty _indicesStarts;
+		SerializedProperty _baseVertices;
 #nullable restore
 			
 		VegetationItem Target => (VegetationItem)target;
 
 		private void OnEnable()
 		{
-			_mesh         = serializedObject.FindBackedProperty(nameof(VegetationItem.Mesh));
-			_material     = serializedObject.FindBackedProperty(nameof(VegetationItem.Material));
-			_transform    = serializedObject.FindBackedProperty(nameof(VegetationItem.ObjectTransform));
-			_indicesCount = serializedObject.FindBackedProperty(nameof(VegetationItem.IndicesCount));
-			_indicesStart = serializedObject.FindBackedProperty(nameof(VegetationItem.IndicesStart));
-			_baseVertex   = serializedObject.FindBackedProperty(nameof(VegetationItem.BaseVertex));
+			_mesh          = serializedObject.FindBackedProperty(nameof(VegetationItem.Mesh));
+			_materials     = serializedObject.FindBackedProperty(nameof(VegetationItem.Materials));
+			_transform     = serializedObject.FindBackedProperty(nameof(VegetationItem.ObjectTransform));
+			_indicesCounts = serializedObject.FindBackedProperty(nameof(VegetationItem.IndicesCounts));
+			_indicesStarts = serializedObject.FindBackedProperty(nameof(VegetationItem.IndicesStarts));
+			_baseVertices  = serializedObject.FindBackedProperty(nameof(VegetationItem.BaseVertices));
 		}
 
 		public override void OnInspectorGUI()
@@ -44,12 +44,20 @@ namespace KVD.Vegetation.Editor.Editor
 			var meshFilter = Target.Prefab.GetComponentInChildren<MeshFilter>();
 
 			var mesh = meshFilter.sharedMesh;
-			_mesh.objectReferenceValue     = mesh;
-			_material.objectReferenceValue = meshFilter.GetComponent<MeshRenderer>().sharedMaterial;
+			_mesh.objectReferenceValue = mesh;
+			var materials = meshFilter.GetComponent<MeshRenderer>().sharedMaterials;
+			_materials.arraySize     = materials.Length;
+			_indicesCounts.arraySize = materials.Length;
+			_indicesStarts.arraySize = materials.Length;
+			_baseVertices.arraySize  = materials.Length;
+			for (var i = 0; i < materials.Length; i++)
+			{
+				_materials.GetArrayElementAtIndex(i).objectReferenceValue = materials[i];
+				_indicesCounts.GetArrayElementAtIndex(i).uintValue = mesh.GetIndexCount(i);
+				_indicesStarts.GetArrayElementAtIndex(i).uintValue = mesh.GetIndexStart(i);
+				_baseVertices.GetArrayElementAtIndex(i).uintValue  = mesh.GetBaseVertex(i);
+			}
 			AssignTransform(meshFilter);
-			_indicesCount.uintValue        = mesh.GetIndexCount(0);
-			_indicesStart.uintValue        = mesh.GetIndexStart(0);
-			_baseVertex.uintValue          = mesh.GetBaseVertex(0);
 			
 			serializedObject.ApplyModifiedProperties();
 		}

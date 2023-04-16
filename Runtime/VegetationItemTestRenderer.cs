@@ -5,12 +5,12 @@ using Random = UnityEngine.Random;
 namespace KVD.Vegetation
 {
 	[ExecuteAlways]
-	public class VegetationItemRenderer : MonoBehaviour
+	public class VegetationItemTestRenderer : MonoBehaviour
 	{
 		private static readonly int InstanceColorsId = Shader.PropertyToID("_InstanceColors");
 #nullable disable
 		[SerializeField] private VegetationItem _vegetationItem;
-		[SerializeField, Range(10, 1_000_000),]
+		[SerializeField, Range(10, 20_000),]
 		private uint _count = 100;
 #nullable restore
 
@@ -41,7 +41,8 @@ namespace KVD.Vegetation
 				
 				instancesColors[i] = new()
 				{
-					color = Color.Lerp(Color.red, Color.blue, Random.value)
+					//color = Color.Lerp(Color.red, Color.blue, Random.value)
+					color = Color.white,
 				};
 			}
 

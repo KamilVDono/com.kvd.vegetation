@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace KVD.Vegetation
@@ -7,8 +8,8 @@ namespace KVD.Vegetation
 	{
 		public static readonly int InstancesTransformsId = Shader.PropertyToID("_InstancesTransforms");
 		
-		public Matrix4x4 transform;
-		public Matrix4x4 inverseTransform;
+		public float4x4 transform;
+		public float4x4 inverseTransform;
 
 		public static int Stride()
 		{

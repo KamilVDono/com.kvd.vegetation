@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using KVD.Utils.DataStructures;
+using Unity.Collections;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -23,7 +25,8 @@ namespace KVD.Vegetation
 		private readonly List<RuntimeVegetationItem> _vegetationItems = new();
 #if ENABLE_PROFILER
 		private readonly OnDemandDictionary<CameraItemPair, ProfilerMarker> _markers =
-			new(pair => new($"VegetationManager.Render {pair.Camera.name} {pair.Item.Name}"));
+			new(static pair => new($"VegetationManager.Render {pair.Camera.name} {pair.Item.Name}"));
+		private static readonly Plane[] Planes = new Plane[6];
 #endif
 
 		private VegetationManager()
@@ -51,13 +54,74 @@ namespace KVD.Vegetation
 			_vegetationItems.Remove(runtimeVegetationItem);
 		}
 
+		internal void Cull(List<VegetationCell> cells)
+		{
+			var visible = new NativeArray<bool>(cells.Count, Allocator.Temp);
+#if UNITY_EDITOR
+			if (Application.isEditor && !Application.isPlaying)
+			{
+				if (UnityEditor.SceneView.lastActiveSceneView == null || UnityEditor.SceneView.lastActiveSceneView.camera == null)
+				{
+					for (var i = 0; i < cells.Count; i++)
+					{
+						cells[i].Culled = true;
+					}
+					visible.Dispose();
+					return;
+				}
+				var camera  = UnityEditor.SceneView.lastActiveSceneView.camera;
+				Cull(cells, camera, visible);
+			
+				for (var i = 0; i < cells.Count; i++)
+				{
+					cells[i].Culled = !visible[i];
+				}
+				visible.Dispose();
+				return;
+			}
+#endif
+			foreach (var camera in _cameras)
+			{
+				Cull(cells, camera, visible);
+			}
+			
+			for (var i = 0; i < cells.Count; i++)
+			{
+				cells[i].Culled = !visible[i];
+			}
+			visible.Dispose();
+		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Cull(List<VegetationCell> cells, Camera camera, NativeArray<bool> visible)
+		{
+			GeometryUtility.CalculateFrustumPlanes(camera, Planes);
+			for (var i = 0; i < cells.Count; i++)
+			{
+				var vegetationCell = cells[i];
+				visible[i] = visible[i] || GeometryUtility.TestPlanesAABB(Planes, vegetationCell.Bounds);
+			}
+		}
+
 		private void OnBeginCameraRendering(ScriptableRenderContext _, Camera camera)
 		{
 			var isValidCamera = _cameras.Contains(camera);
 #if UNITY_EDITOR
 			if (camera.cameraType == CameraType.SceneView)
 			{
-				isValidCamera = true;
+				var currentStage = UnityEditor.SceneManagement.StageUtility.GetCurrentStage();
+				if (currentStage == null || currentStage is UnityEditor.SceneManagement.MainStage)
+				{
+					isValidCamera = true;
+				}
+				else if (currentStage is UnityEditor.SceneManagement.PrefabStage prefabStage)
+				{
+					isValidCamera = prefabStage.mode == UnityEditor.SceneManagement.PrefabStage.Mode.InContext;
+				}
+				else
+				{
+					isValidCamera = false;
+				}
 			}
 #endif
 			if (!isValidCamera)

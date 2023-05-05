@@ -1,4 +1,6 @@
 ﻿using System.Runtime.InteropServices;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -25,18 +27,19 @@ namespace KVD.Vegetation
 			_runtimeVegetationItem = _vegetationItem.ToRuntimeVegetationItem(_count);
 
 			// Initialize buffer with the given population.
-			var instancesTransforms = new InstanceTransform[_count];
-			var instancesColors     = new InstanceColor[_count];
+			var instancesTransforms =
+				new NativeArray<InstanceTransform>((int)_count, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+			var instancesColors = new NativeArray<InstanceColor>((int)_count, Allocator.Temp);
 			for (var i = 0; i < _count; i++)
 			{
-				var datum    = new InstanceTransform();
-				var position = new Vector3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10));
-				var rotation = Quaternion.identity;
-				var scale    = Vector3.one;
+				var position = new float3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10));
+				var rotation = quaternion.identity;
+				var scale    = new float3(1, 1, 1);
 
-				datum.transform = Matrix4x4.TRS(position, rotation, scale);
-				datum.inverseTransform = datum.transform.inverse;
-
+				var datum = new InstanceTransform
+				{
+					transform = float4x4.TRS(position, rotation, scale),
+				};
 				instancesTransforms[i] = datum;
 				
 				instancesColors[i] = new()
@@ -46,7 +49,7 @@ namespace KVD.Vegetation
 				};
 			}
 
-			_runtimeVegetationItem.BindTransforms(instancesTransforms);
+			_runtimeVegetationItem.BindTransformsInPlace(instancesTransforms);
 			_runtimeVegetationItem.BindData(instancesColors, InstanceColor.Stride(), InstanceColorsId);
 			_runtimeVegetationItem.StartRendering();
 		}

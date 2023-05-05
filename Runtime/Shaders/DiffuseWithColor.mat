@@ -23,7 +23,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_InstancedIndirectDiffuse
+  m_Name: DiffuseWithColor
   m_Shader: {fileID: -6465566751694194690, guid: da62621ce59859a4d9ddd710d0ead6ec, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

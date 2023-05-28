@@ -43,7 +43,7 @@ namespace KVD.Vegetation
 		
 		private readonly ItemsByPrioritySort _sorter;
 
-		public PoissonDiscSampler(List<VegetationItem> items, Bounds bounds, float density, int attempts, uint seed)
+		public PoissonDiscSampler(IReadOnlyList<VegetationItem> items, Bounds bounds, float density, int attempts, uint seed)
 		{
 			var boundsArea = bounds.size.x*bounds.size.z;
 			

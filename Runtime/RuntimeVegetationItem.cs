@@ -70,16 +70,12 @@ namespace KVD.Vegetation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void BindTransforms(BindInstanceTransformsFuture bindTransforms)
 		{
-			if (bindTransforms.handle.IsCompleted)
-			{
-				bindTransforms.handle.Complete();
-			}
+			bindTransforms.handle.Complete();
 			var buffer = new ComputeBuffer(bindTransforms.transforms.Length, InstanceTransform.Stride());
 			buffer.SetData(bindTransforms.transforms);
 			BindData(buffer, InstanceTransform.InstancesTransformsId);
 			
 			CalculateBounds(bindTransforms.transforms);
-			bindTransforms.Dispose();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -165,20 +161,8 @@ namespace KVD.Vegetation
 
 		private struct BufferData
 		{
-			private ComputeBuffer _buffer;
-			private int _property;
-
-			public ComputeBuffer Buffer
-			{
-				readonly get => _buffer;
-				set => _buffer = value;
-			}
-
-			public int Property
-			{
-				readonly get => _property;
-				set => _property = value;
-			}
+			public ComputeBuffer Buffer{ get; set; }
+			public int Property{ get; set; }
 		}
 
 		[BurstCompile]
@@ -196,11 +180,10 @@ namespace KVD.Vegetation
 			}
 		}
 		
-		public struct BindInstanceTransformsFuture : IDisposable
+		public struct BindInstanceTransformsFuture
 		{
 			public JobHandle handle;
 			public NativeArray<InstanceTransform> transforms;
-			private bool _disposeTransforms;
 
 			public static BindInstanceTransformsFuture Create(float4x4 objectTransform,
 				NativeArray<InstanceTransform> transforms, bool dispose = true)
@@ -213,20 +196,11 @@ namespace KVD.Vegetation
 					transforms      = transforms,
 				};
 				instance.handle = job.Schedule(transforms.Length, 64);
-				instance._disposeTransforms = dispose;
+				if (dispose)
+				{
+					instance.handle = transforms.Dispose(instance.handle);
+				}
 				return instance;
-			}
-
-			public void Dispose()
-			{
-				if (!handle.IsCompleted)
-				{
-					handle.Complete();
-				}
-				if (_disposeTransforms)
-				{
-					transforms.Dispose();
-				}
 			}
 		}
 

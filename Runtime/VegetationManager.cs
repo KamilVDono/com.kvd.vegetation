@@ -26,8 +26,8 @@ namespace KVD.Vegetation
 #if ENABLE_PROFILER
 		private readonly OnDemandDictionary<CameraItemPair, ProfilerMarker> _markers =
 			new(static pair => new($"VegetationManager.Render {pair.Camera.name} {pair.Item.Name}"));
-		private static readonly Plane[] Planes = new Plane[6];
 #endif
+		private static readonly Plane[] Planes = new Plane[6];
 
 		private VegetationManager()
 		{

@@ -12,7 +12,7 @@ namespace KVD.Vegetation
 		private static readonly int InstanceColorsId = Shader.PropertyToID("_InstanceColors");
 #nullable disable
 		[SerializeField] private VegetationItem _vegetationItem;
-		[SerializeField, Range(10, 20_000),]
+		[SerializeField, Range(10, 200_000),]
 		private uint _count = 100;
 #nullable restore
 
@@ -28,11 +28,11 @@ namespace KVD.Vegetation
 
 			// Initialize buffer with the given population.
 			var instancesTransforms =
-				new NativeArray<InstanceTransform>((int)_count, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+				new NativeArray<InstanceTransform>((int)_count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 			var instancesColors = new NativeArray<InstanceColor>((int)_count, Allocator.Temp);
 			for (var i = 0; i < _count; i++)
 			{
-				var position = new float3(Random.Range(-10, 10), Random.Range(-10, 10), Random.Range(-10, 10));
+				var position = new float3(Random.Range(-10f, 10f), Random.Range(-10f, 10f), Random.Range(-10f, 10f));
 				var rotation = quaternion.identity;
 				var scale    = new float3(1, 1, 1);
 

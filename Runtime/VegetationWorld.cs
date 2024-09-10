@@ -22,7 +22,6 @@ namespace KVD.Vegetation
 		private List<VegetationCell> _cells = new();
 		private List<VegetationCell> _toSpawn = new();
 		private List<VegetationCell> _spawning = new();
-		private List<VegetationCell.SpawningProgress> _spawningProgressesBuffer = new();
 		
 		public float DensityModifier => _density;
 		public IReadOnlyList<VegetationItem> SourceItems => _items;
@@ -44,7 +43,6 @@ namespace KVD.Vegetation
 		{
 			VegetationManager.Instance.Cull(_cells);
 			
-			_spawningProgressesBuffer.Clear();
 			_spawning.Sort(static (a, b) => a.PredictSpawningProgress().CompareTo(b.PredictSpawningProgress()));
 			
 			var startIndex         = _spawning.Count-1;
@@ -186,7 +184,6 @@ namespace KVD.Vegetation
 		{
 			public int2 Id{ get; }
 			public int Instances{ get; }
-			
 		}
 	}
 }

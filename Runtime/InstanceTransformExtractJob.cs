@@ -6,7 +6,7 @@ using Unity.Mathematics;
 namespace KVD.Vegetation
 {
 	[BurstCompile]
-	public struct InstanceTransformExtract : IJob
+	public struct InstanceTransformExtractJob : IJob
 	{
 		[ReadOnly] public NativeSlice<float3> points;
 		[ReadOnly] public NativeSlice<half2> rotationAndScale;

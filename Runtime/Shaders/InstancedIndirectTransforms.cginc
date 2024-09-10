@@ -1,7 +1,7 @@
 #ifndef VEGETATION_INSTANCED_TRANSFORMS_INCLUDED
 #define VEGETATION_INSTANCED_TRANSFORMS_INCLUDED
 
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+#if UNITY_ANY_INSTANCING_ENABLED
 
 struct InstanceTransform
 {
@@ -16,7 +16,8 @@ uniform StructuredBuffer<InstanceTransform> _InstancesTransforms;
 
 void setupInstancesIndirect()
 {
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+#if UNITY_ANY_INSTANCING_ENABLED
+	#ifndef DOTS_INSTANCING_ON
 
 #ifdef unity_ObjectToWorld
 #undef unity_ObjectToWorld
@@ -28,6 +29,7 @@ void setupInstancesIndirect()
 
 	unity_ObjectToWorld = _InstancesTransforms[unity_InstanceID].transform;
 	unity_WorldToObject = _InstancesTransforms[unity_InstanceID].inverseTransform;
+	#endif
 #endif
 }
 

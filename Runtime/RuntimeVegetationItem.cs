@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
+using KVD.Utils.DataStructures;
+using KVD.Utils.Extensions;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -56,19 +59,19 @@ namespace KVD.Vegetation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void BindTransformsInPlace(NativeArray<InstanceTransform> transforms, bool dispose = true)
 		{
-			var future = BindTransforms(transforms, dispose);
-			BindTransforms(future);
+			var future = BindTransforms(transforms);
+			BindTransforms(future, dispose);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public BindInstanceTransformsFuture BindTransforms(NativeArray<InstanceTransform> transforms, bool dispose = true)
+		public BindInstanceTransformsFuture BindTransforms(NativeArray<InstanceTransform> transforms)
 		{
-			var future = BindInstanceTransformsFuture.Create(_objectTransform, transforms, dispose);
+			var future = BindInstanceTransformsFuture.Create(_objectTransform, transforms);
 			return future;
 		}
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void BindTransforms(BindInstanceTransformsFuture bindTransforms)
+		public void BindTransforms(BindInstanceTransformsFuture bindTransforms, bool dispose = true)
 		{
 			bindTransforms.handle.Complete();
 			var buffer = new ComputeBuffer(bindTransforms.transforms.Length, InstanceTransform.Stride());
@@ -76,6 +79,10 @@ namespace KVD.Vegetation
 			BindData(buffer, InstanceTransform.InstancesTransformsId);
 			
 			CalculateBounds(bindTransforms.transforms);
+			if (dispose)
+			{
+				bindTransforms.transforms.Dispose();
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,6 +110,12 @@ namespace KVD.Vegetation
 				Buffer   = computeBuffer,
 				Property = property,
 			};
+			BindData(bufferData);
+		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void BindData(in BufferData bufferData)
+		{
 			_buffers.Add(bufferData);
 		}
 
@@ -127,6 +140,7 @@ namespace KVD.Vegetation
 				{
 					_materials[i].SetBuffer(_buffers[j].Property, _buffers[j].Buffer);
 				}
+				//Graphics.RenderMeshIndirect(null, _mesh, );
 				Graphics.DrawMeshInstancedIndirect(_mesh, i, _materials[i], _bounds,
 					_argsBuffer, argsOffset: i*ArgsStride,
 					camera: camera, layer: _layer, castShadows: _shadowCastingMode);
@@ -159,12 +173,6 @@ namespace KVD.Vegetation
 			result.Dispose();
 		}
 
-		private struct BufferData
-		{
-			public ComputeBuffer Buffer{ get; set; }
-			public int Property{ get; set; }
-		}
-
 		[BurstCompile]
 		struct BindInstanceTransformJob : IJobParallelFor
 		{
@@ -186,7 +194,7 @@ namespace KVD.Vegetation
 			public NativeArray<InstanceTransform> transforms;
 
 			public static BindInstanceTransformsFuture Create(float4x4 objectTransform,
-				NativeArray<InstanceTransform> transforms, bool dispose = true)
+				NativeArray<InstanceTransform> transforms)
 			{
 				var instance = new BindInstanceTransformsFuture();
 				instance.transforms = transforms;
@@ -196,10 +204,6 @@ namespace KVD.Vegetation
 					transforms      = transforms,
 				};
 				instance.handle = job.Schedule(transforms.Length, 64);
-				if (dispose)
-				{
-					instance.handle = transforms.Dispose(instance.handle);
-				}
 				return instance;
 			}
 		}
@@ -266,6 +270,50 @@ namespace KVD.Vegetation
 				minMaxResult[0] = min;
 				minMaxResult[1] = max;
 			}
+		}
+		
+		// === Serialization
+		public void Serialize(BinaryWriter binaryWriter)
+		{
+			binaryWriter.Write(Count);
+			binaryWriter.Write(_bounds);
+			binaryWriter.Write(_buffers.Count);
+			for (var i = 0; i < _buffers.Count; i++)
+			{
+				binaryWriter.Write(_buffers[i]);
+			}
+		}
+		
+		public static RuntimeVegetationItem Serialize(BinaryReader binaryReader, VegetationItem vegetationItem)
+		{
+			var count  = binaryReader.ReadUInt32();
+			var bounds = binaryReader.ReadBounds();
+			var runtimeVegetationItem = new RuntimeVegetationItem(vegetationItem, count)
+			{
+				_bounds = bounds,
+			};
+			var bufferCount = binaryReader.ReadInt32();
+			runtimeVegetationItem._buffers.Capacity = bufferCount;
+			for (var i = 0; i < bufferCount; i++)
+			{
+				runtimeVegetationItem._buffers.Add(binaryReader.ReadBufferData());
+			}
+			return runtimeVegetationItem;
+		}
+	}
+	
+	public static class RuntimeVegetationItemSerializationExt
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Write(this BinaryWriter binaryWriter, RuntimeVegetationItem runtimeVegetationItem)
+		{
+			runtimeVegetationItem.Serialize(binaryWriter);
+		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static RuntimeVegetationItem ReadRuntimeVegetationItem(this BinaryReader binaryReader, VegetationItem vegetationItem)
+		{
+			return RuntimeVegetationItem.Serialize(binaryReader, vegetationItem);
 		}
 	}
 }

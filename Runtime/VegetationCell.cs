@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using KVD.Utils.Extensions;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -17,14 +20,13 @@ namespace KVD.Vegetation
 		private static readonly ProfilerMarker RuntimeItemCreationFuturesMarker = new("Runtime Item Creation.Futures");
 		private static readonly ProfilerMarker RuntimeItemCreationBindsMarker = new("Runtime Item Creation.Binds");
 
+		private readonly int2 _index;
 		// === Lifetime/Spawning state
 		private bool _disposed;
-		private readonly int2 _index;
 		private IReadOnlyList<VegetationItem> _sources;
 		private SamplerData _samplerData;
 		private TransformsPrepareData _transformsPrepareData;
 		private FuturesTransformsData _futuresTransformsData;
-
 		// === Rendering state
 		private bool _culled = true;
 		private List<RuntimeVegetationItem> _items = new();
@@ -66,7 +68,7 @@ namespace KVD.Vegetation
 			_index = index;
 		}
 
-		public void StartSpawning(List<VegetationItem> source, int attempts, float density)
+		public void StartSpawning(IReadOnlyList<VegetationItem> source, int attempts, float density)
 		{
 			if (_disposed)
 			{
@@ -224,7 +226,7 @@ namespace KVD.Vegetation
 			for (var i = 0; i < _sources.Count; i++)
 			{
 				var transform = new NativeList<InstanceTransform>(points.Length, Allocator.TempJob);
-				var job = new InstanceTransformExtract
+				var job = new InstanceTransformExtractJob
 				{
 					points           = points,
 					rotationAndScale = _samplerData.rotationAndScale.AsArray(),
@@ -427,6 +429,64 @@ namespace KVD.Vegetation
 				}
 				return SpawningProgress.Waiting;
 			}
+		}
+		
+		// === Serialization
+		public void Serialize(BinaryWriter binaryWriter)
+		{
+			binaryWriter.Write(_items.Count);
+			binaryWriter.Write(_index);
+			binaryWriter.Write(Bounds.center);
+			binaryWriter.Write(Bounds.size.x);
+			foreach (var item in _items)
+			{
+				binaryWriter.Write(item);
+			}
+		}
+		
+		public static VegetationCell Deserialize(BinaryReader binaryReader, int2 index, IReadOnlyList<VegetationItem> source)
+		{
+			var itemsCount = binaryReader.ReadInt32();
+			var savedIndex = binaryReader.ReadInt2();
+			var isValid    = true;
+			if (itemsCount != source.Count)
+			{
+				Debug.LogWarning($"Cannot load cell at {index} because the number of items ({itemsCount}) does not match the number of items in the source ({source.Count}).");
+				isValid = false;
+			}
+			if (savedIndex.x != index.x || savedIndex.y != index.y)
+			{
+				Debug.LogWarning($"Cannot load cell at {index} because the saved index ({savedIndex}) does not match the index ({index}).");
+				isValid = false;
+			}
+			if (!isValid)
+			{
+				return null;
+			}
+			var center = binaryReader.ReadVector3();
+			var size   = binaryReader.ReadSingle();
+			var cell   = new VegetationCell(size, center, index);
+			for (var i = 0; i < itemsCount; i++)
+			{
+				var item = binaryReader.ReadRuntimeVegetationItem(source[i]);
+				cell._items.Add(item);
+			}
+			return cell;
+		}
+	}
+	
+	public static class VegetationCellSerializationExt
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Write(this BinaryWriter binaryWriter, VegetationCell vegetationCell)
+		{
+			vegetationCell.Serialize(binaryWriter);
+		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static VegetationCell ReadVegetationCell(this BinaryReader binaryReader, int2 index, IReadOnlyList<VegetationItem> source)
+		{
+			return VegetationCell.Deserialize(binaryReader, index, source);
 		}
 	}
 }

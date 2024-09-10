@@ -9,7 +9,7 @@
     ],
     "m_Keywords": [
         {
-            "m_Id": "7c8bb9b591f3483badfbf858e11d099a"
+            "m_Id": "737241c9a25148729f1925254468b511"
         }
     ],
     "m_Dropdowns": [],
@@ -235,9 +235,34 @@
             "m_Id": "85fad7401deb028b91f5778690fdb6c1"
         },
         {
-            "m_Id": "7c8bb9b591f3483badfbf858e11d099a"
+            "m_Id": "737241c9a25148729f1925254468b511"
         }
     ]
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.ShaderKeyword",
+    "m_ObjectId": "737241c9a25148729f1925254468b511",
+    "m_Guid": {
+        "m_GuidSerialized": "c6e747bb-54fe-4224-a943-78db41d8c83b"
+    },
+    "m_Name": "PROCEDURAL_INSTANCING_ON",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "PROCEDURAL_INSTANCING_ON",
+    "m_DefaultReferenceName": "_PROCEDURAL_INSTANCING_ON",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_KeywordType": 0,
+    "m_KeywordDefinition": 1,
+    "m_KeywordScope": 1,
+    "m_KeywordStages": 63,
+    "m_Entries": [],
+    "m_Value": 1,
+    "m_IsEditable": true
 }
 
 {
@@ -292,31 +317,6 @@
         "Y",
         "Z"
     ]
-}
-
-{
-    "m_SGVersion": 1,
-    "m_Type": "UnityEditor.ShaderGraph.ShaderKeyword",
-    "m_ObjectId": "7c8bb9b591f3483badfbf858e11d099a",
-    "m_Guid": {
-        "m_GuidSerialized": "8d86b30b-2644-46ad-8d76-b0a8f3602188"
-    },
-    "m_Name": "PROCEDURAL_INSTANCING_ON",
-    "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "PROCEDURAL_INSTANCING_ON",
-    "m_DefaultReferenceName": "_PROCEDURAL_INSTANCING_ON",
-    "m_OverrideReferenceName": "PROCEDURAL_INSTANCING_ON",
-    "m_GeneratePropertyBlock": true,
-    "m_UseCustomSlotLabel": false,
-    "m_CustomSlotLabel": "",
-    "m_DismissedVersion": 0,
-    "m_KeywordType": 0,
-    "m_KeywordDefinition": 1,
-    "m_KeywordScope": 1,
-    "m_KeywordStages": 63,
-    "m_Entries": [],
-    "m_Value": 1,
-    "m_IsEditable": true
 }
 
 {
@@ -421,7 +421,7 @@
     "m_SourceType": 1,
     "m_FunctionName": "AddPragma",
     "m_FunctionSource": "",
-    "m_FunctionBody": "#pragma instancing_options renderinglayer procedural:setupInstancesIndirect\nOut = A;"
+    "m_FunctionBody": "#pragma instancing_options procedural:setupInstancesIndirect\nOut = A;"
 }
 
 {
